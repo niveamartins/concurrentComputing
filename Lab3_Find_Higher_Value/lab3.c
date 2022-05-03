@@ -10,12 +10,19 @@
 
 int nthreads;
 float *randomVector;
+float biggestNumberSeq, smallestNumberSeq;
 
 typedef struct{
    int id;
    int posInitial;
    int posFinal;
 } tArgs;
+
+typedef struct{
+    float biggestNumberConc;
+    float smallestNumberConc;
+} retThread;
+
 
 float* createAndPopulateArr(long long int quantity) {
     float *array;
@@ -26,59 +33,65 @@ float* createAndPopulateArr(long long int quantity) {
     }
 
     for (int i = 0; i < quantity; i++) {
-        array[i] = rand() % 10;
+        array[i] = rand();
     }
 
     return array;
 }
 
 
-float findBiggestNumberSeq (long long int quantity) {
-    float biggestNumber = -1;
-    for (int i = 0; i < quantity; i ++) {
+float findNumbersSeq (long long int quantity) {
+    float biggestNumber = randomVector[0];
+    float smallestNumber = randomVector[0];
+
+    for (int i = 0; i < quantity; i++) {
         if (randomVector[i] > biggestNumber) {
-            printf("%d %d \n", randomVector[i], biggestNumber);
             biggestNumber = randomVector[i];
+        }
+
+        if (randomVector[i] < smallestNumber) {
+            smallestNumber = randomVector[i];
         }
     }
 
-    return biggestNumber;
+    biggestNumberSeq = biggestNumber;
+    smallestNumberSeq = smallestNumber;
 }
 
-void* findBiggestNumberConc (void *arg) {
+void* findNumbersConc (void *arg) {
     tArgs *args = (tArgs *) arg;
-    
-    long int biggestNumber = -1;
+    retThread *ret;
 
-    for (int i = args->posInitial; i <= (args->posFinal) ; i ++) {
-        printf("thread %d: %d %d \n", args->id, randomVector[i], biggestNumber);
+    ret = (pthread_t*) malloc(sizeof(retThread));
+    if(ret==NULL) {puts("ERRO--malloc"); return 2;}
+
+    int firstPos = args->posInitial;
+    
+    float biggestNumber = randomVector[firstPos];
+    float smallestNumber = randomVector[firstPos];
+
+    for (int i = args->posInitial; i <= (args->posFinal) ; i++) {
+
         if (randomVector[i] > biggestNumber) {
             biggestNumber = randomVector[i];
         }
+
+        if (randomVector[i] < smallestNumber) {
+            smallestNumber = randomVector[i];
+        }
     }
+
+    ret->biggestNumberConc = biggestNumber;
+    ret->smallestNumberConc = smallestNumber;
 
     printf(">>> thread %d executada com sucesso. \n", args->id);
-     pthread_exit((void *) biggestNumber); 
+    pthread_exit((void *) ret); 
 }
-
-// void* compareMatrices(int dim) {   
-//     for (int i = 0; i < dim; i++) {
-//         for(int j = 0; j< dim; j++){
-//             if (matFinalConc[i*dim+j] != matFinalSequencial[i*dim+j]) {
-//                   printf(">>>>> As matrizes são diferentes.\n");
-//                   return 0;
-//            }
-//         }
-//     }
-
-//     printf(">>>>> As matrizes são iguais.\n");
-// }
 
 int main(int argc, char* argv[]) {
     long long int dim;
-    float biggestNumberSeq = -1;
-    float biggestNumberConc = -1;
-    long int retorno;
+    float biggestNumberConc = -1, smallestNumberConc = -1;
+    retThread * retorno;
     double start, finish, elapsedSeq, elapsedConc;
     pthread_t *tid; 
     tArgs *args; 
@@ -102,8 +115,8 @@ int main(int argc, char* argv[]) {
     printf("--- COMEÇO DO ALGORITMO SEQUENCIAL --- \n\n"); 
     GET_TIME(start);
 
-    biggestNumberSeq = findBiggestNumberSeq(dim); 
-    
+    findNumbersSeq(dim); 
+
     GET_TIME(finish);
     elapsedSeq = finish - start;
 
@@ -122,23 +135,32 @@ int main(int argc, char* argv[]) {
     for(int i=0; i<nthreads; i++) {
         (args+i)->id = i;
         (args+i)->posInitial= i * (int)(dim/nthreads); 
-        (args+i)->posFinal = ((i+1) * (int)(dim/nthreads));
-        if(pthread_create(tid+i, NULL, findBiggestNumberConc, (void*) (args+i))){
+        (args+i)->posFinal = ((i+1) * (int)(dim/nthreads))-1;
+        if(pthread_create(tid+i, NULL, findNumbersConc, (void*) (args+i))){
             puts("ERRO--pthread_create"); return 3;
         }
     }
 
+    biggestNumberConc = randomVector[0];
+    smallestNumberConc = randomVector[0];
 
     for(long int i=0; i<nthreads; i++) {
-      if(pthread_join(*(tid+i), (void**) &retorno)){
+    
+      if(pthread_join(*(tid+i), (void **) &retorno)){
          fprintf(stderr, "ERRO--pthread_create\n");
          return 3;
       }
+
+
+      if (biggestNumberConc < (retorno)->biggestNumberConc) {
+          biggestNumberConc = (retorno)->biggestNumberConc;
+      }
       
-      if (biggestNumberConc < retorno) {
-          biggestNumberConc = retorno;
+      if (smallestNumberConc > (retorno)->smallestNumberConc) {
+          smallestNumberConc = (retorno)->smallestNumberConc;
       }
    }
+
 
     GET_TIME(finish);
     elapsedConc = finish - start;
@@ -149,9 +171,19 @@ int main(int argc, char* argv[]) {
 
     printf("--- RESULTADOS DO PROGRAMA --- \n\n"); 
 
-    // compareMatrices(dim);
 
-    printf("%f %f", biggestNumberConc, biggestNumberSeq);
+    if (biggestNumberConc == biggestNumberSeq) {
+        printf(">>>>> O maior número é igual.\n");
+    } else {
+        printf(">>>>> O maior número NÃO é igual.\n");
+    }
+
+    if (smallestNumberConc == smallestNumberSeq) {
+        printf(">>>>> O menor número é igual.\n");
+    } else {
+        printf(">>>>> O menor número NÂO é igual: %f %f\n", smallestNumberConc, smallestNumberSeq);
+    }
+
     
     printf(">>>>> Ganho de desempenho: %lf \n", (elapsedSeq/elapsedConc));
 }
