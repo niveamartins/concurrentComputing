@@ -30,7 +30,7 @@ float* createAndPopulateArr(long int quantity) {
     }
 
     for (int i = 0; i < quantity; i++) {
-        array[i] = rand() % 10;
+        array[i] = rand();
     }
 
     return array;
@@ -67,14 +67,19 @@ int isPrime(int x) {
 void * processingVectorConcurrent(void *arg) {
     tArgs *args = (tArgs *) arg;
     float result;
+    float actual;
     int initial = args->posInitial;
     int final = args->posFinal;
 
     for(int i = initial; i <= final; i++) {
-        if (isPrime(initialVector[i]) == 1) {
-            result = sqrt(initialVector[i]);
+        pthread_mutex_lock(&mutex);
+        actual = initialVector[i];
+        pthread_mutex_unlock(&mutex);
+
+        if (isPrime(actual) == 1) {
+            result = sqrt(actual);
         } else {
-            result = initialVector[i];
+            result = actual;
         }
         pthread_mutex_lock(&mutex);
         finalVectorC[i] = result;
