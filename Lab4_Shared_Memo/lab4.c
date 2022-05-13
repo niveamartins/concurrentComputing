@@ -127,25 +127,25 @@ int main(int argc, char* argv[]) {
 
     
 
-    printf("--- COMEÇO DO ALGORITMO SEQUENCIAL --- \n\n"); 
-    GET_TIME(start);
+    // printf("--- COMEÇO DO ALGORITMO SEQUENCIAL --- \n\n"); 
+    // GET_TIME(start);
 
-    for(int i=0; i<dim; i++) {
-        if (isPrime(initialVector[i]) == 1) {
-            finalVectorS[i] = sqrt(initialVector[i]);
-        }
-        else {
-            finalVectorS[i] = initialVector[i];
-        }
-    }
+    // for(int i=0; i<dim; i++) {
+    //     if (isPrime(initialVector[i]) == 1) {
+    //         finalVectorS[i] = sqrt(initialVector[i]);
+    //     }
+    //     else {
+    //         finalVectorS[i] = initialVector[i];
+    //     }
+    // }
 
 
-    GET_TIME(finish);
-    elapsedSeq = finish - start;
+    // GET_TIME(finish);
+    // elapsedSeq = finish - start;
 
-    printf(">>>>> Tempo decorrido para processar valores primos: \n%lf segundos.\n\n", elapsedSeq);
+    // printf(">>>>> Tempo decorrido para processar valores primos: \n%lf segundos.\n\n", elapsedSeq);
 
-    printf("--- FIM DO ALGORITMO SEQUENCIAL --- \n\n\n"); 
+    // printf("--- FIM DO ALGORITMO SEQUENCIAL --- \n\n\n"); 
     printf("--- COMEÇO DO ALGORITMO CONCORRENTE --- \n\n"); 
     GET_TIME(start);
     
